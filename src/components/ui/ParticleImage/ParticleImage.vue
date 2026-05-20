@@ -59,10 +59,14 @@ let particles: ImageParticle;
 const imageParticleRef = ref<HTMLImageElement>();
 
 const onImageLoad = () => {
+  if (!imageParticleRef.value) {
+    console.warn("[ParticleImage] Image reference is null");
+    return;
+  }
+  
   const { InspiraImageParticle } = inspiraImageParticles();
   particles = new InspiraImageParticle(imageParticleRef.value);
   
-  // 确保图片元素完全不可见
   if (imageParticleRef.value) {
     imageParticleRef.value.style.visibility = 'hidden';
     imageParticleRef.value.style.position = 'absolute';
@@ -71,7 +75,6 @@ const onImageLoad = () => {
     imageParticleRef.value.style.overflow = 'hidden';
   }
   
-  // 启动粒子效果
   particles.start();
 };
 

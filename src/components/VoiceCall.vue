@@ -13,6 +13,7 @@ const props = defineProps<{
     isVisible: boolean;
     voiceAnimationManager: VoiceAnimationManager;
     chatStateManager: ChatStateManager;
+    isMuted?: boolean;
 }>();
 
 // 存储AI和用户消息列表
@@ -261,6 +262,7 @@ const handleVoiceStateChange = () => {
 
 const emit = defineEmits<{
     (e: 'onShutDown'): void;
+    (e: 'toggleMute'): void;
 }>();
 
 // 语音状态监听器
@@ -441,10 +443,13 @@ const texts = [
             </div>
         </div>
         
-        <!-- 挂断按钮 -->
+        <!-- 静音和挂断按钮 -->
         <div class="button-container">
-            <button @click="emit('onShutDown')">
-                <img src="/phone.png" alt="挂断" />
+            <button @click="emit('toggleMute')" :class="{ muted: props.isMuted }">
+                <span class="mute-icon">{{ props.isMuted ? '🔇' : '🔊' }}</span>
+            </button>
+            <button @click="emit('onShutDown')" class="hangup-button">
+                <span class="hangup-icon">💬</span>
             </button>
         </div>
     </div>
@@ -467,23 +472,23 @@ const texts = [
     /* 顶部粒子图片容器 */
     .particle-image-top {
         position: absolute;
-        top: 5vh; /* 距离顶部10% */
-        left: 10vw; /* 距离左侧10% */
-        width: 80vw; /* 宽度为80%，左右各留10% */
-        z-index: 50; /* 提高z-index，确保在particles-layer之上 */
-        pointer-events: none; /* 允许鼠标事件穿透到下层组件 */
-        overflow: hidden; /* 防止内容溢出 */
-        display: flex; /* 使用flex布局 */
-        justify-content: center; /* 水平居中 */
-        align-items: center; /* 垂直居中 */
-        border-radius: 20px; /* 添加圆角效果 */
+        top: 5vh;
+        left: 10vw;
+        width: 80vw;
+        z-index: 50;
+        pointer-events: none;
+        overflow: hidden;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        border-radius: 20px;
         
         :deep(canvas) {
             width: 100%;
             height: 100%;
             display: block;
-            object-fit: cover; /* 确保图片覆盖整个容器 */
-            border-radius: 20px; /* 为canvas也添加圆角效果 */
+            object-fit: cover;
+            border-radius: 20px;
         }
     }
 
@@ -648,7 +653,7 @@ const texts = [
     .voice-wave-container {
         position: absolute;
         left: 50%;
-        bottom: 2.75rem;
+        bottom: 5.5rem;
         transform: translateX(-50%);
         width: 80px;
         height: 20px;
@@ -659,16 +664,18 @@ const texts = [
         // 为音浪容器单独设置 pointer-events，覆盖父容器的设置
         pointer-events: auto;
     }
-    /* 挂断按钮 */
+    /* 静音和挂断按钮容器 */
     .button-container {
         position: absolute;
-        right: 2rem;
-        bottom: 2rem;
+        left: 50%;
+        bottom: 1.5rem;
+        transform: translateX(-50%);
         display: flex;
+        gap: 1.5rem;
         justify-content: center;
         align-items: center;
-        z-index: 101; /* 确保在所有元素之上，包括background-container和spline-container */
-        pointer-events: auto; /* 容器允许鼠标交互 */
+        z-index: 101;
+        pointer-events: auto;
 
         button {
             background: rgba(255, 255, 255, 0.1);
@@ -686,10 +693,23 @@ const texts = [
             }
         }
 
-        img {
-            width: 2.5rem;
-            height: 2.5rem;
-            border-radius: 50%;
+        .mute-icon {
+            font-size: 2rem;
+            line-height: 1;
+            cursor: pointer;
+        }
+
+        .hangup-button {
+            width: 3.5rem;
+            height: 3.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .hangup-icon {
+            font-size: 2rem;
+            line-height: 1;
             cursor: pointer;
         }
     }
