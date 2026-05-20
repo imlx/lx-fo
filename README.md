@@ -1,10 +1,17 @@
 # lx-fo
 
-> 本项目基于 [xiaozhi-web-client](https://github.com/TOM88812/xiaozhi-web-client) 进行重构和优化，旨在提供一个更稳定、功能更完善的小智语音助手 Web 端体验。
+> 本项目基于多个优秀的开源项目进行重构和优化，旨在提供一个更稳定、功能更完善的小智语音助手 Web 端体验。
 
 ## 简介
 
-`lx-fo` 是一个基于 **Vue3 + Python FastAPI** 构建的 AI 语音助手 Web 应用。该项目起源于 [虾哥](https://github.com/78/xiaozhi-esp32) 的小智项目，让用户可以在没有硬件条件的情况下体验 AI 小智的对话功能。
+`lx-fo` 是一个基于 **Vue3 + Python FastAPI** 构建的 AI 语音助手 Web 应用。
+
+**项目起源与参考：**
+- 起源于 [虾哥](https://github.com/78) 的 [xiaozhi-esp32](https://github.com/78/xiaozhi-esp32) 项目
+- 基于 [TOM88812](https://github.com/TOM88812) 的 [xiaozhi-web-client](https://github.com/TOM88812/xiaozhi-web-client) 进行重构
+- 参考了 [Yang-ZhiHang](https://github.com/Yang-ZhiHang) 的 [xiaozhi-webui](https://github.com/Yang-ZhiHang/xiaozhi-webui) 项目
+
+本项目让用户可以在没有硬件条件的情况下体验 AI 小智的对话功能。
 
 ## 功能特性
 
