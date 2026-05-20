@@ -42,14 +42,14 @@ type Props = {
 
 const props = withDefaults(defineProps<Props>(), {
   color: "#FFF",
-  quantity: 100,
+  quantity: 50,
   staticity: 50, // 参照demo文件，调整为50
   ease: 50, // 参照demo文件，调整为50
   class: "",
   specialColors: () => ({
     fluorescentGreen: 0,
     fluorescentYellow: 0,
-    lightBlue: 50,
+    lightBlue: 10,
   }),
 });
 

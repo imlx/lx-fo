@@ -391,7 +391,6 @@ const texts = [
                 :quantity="150"
                 :ease="60"
                 color="#FFFFFF"
-                :staticity=""
                 :opacity="0.5"
                 refresh
                 :special-colors="{ fluorescentGreen: 0, fluorescentYellow: 0, lightBlue: 50 }"
@@ -442,12 +441,12 @@ const texts = [
             </div>
         </div>
         
-        <!-- 挂断按钮移到content-layer外，确保可以接收鼠标事件 -->
-        <!-- <div class="button-container">
+        <!-- 挂断按钮 -->
+        <div class="button-container">
             <button @click="emit('onShutDown')">
                 <img src="/phone.png" alt="挂断" />
             </button>
-        </div> -->
+        </div>
     </div>
 </template>
 

@@ -55,6 +55,21 @@ const handleQuit = () => {
                 <input v-model="settingStore.token" type="text" placeholder="开启后将在连接时携带 Token"
                     :disabled="!settingStore.tokenEnable" />
             </div>
+            <div style="display: flex; flex-direction: column">
+                <div style="
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                ">
+                    <label>文字聊天语音播报</label>
+                    <label class="toggle-switch">
+                        <input type="checkbox" :checked="settingStore.textChatVoiceEnabled"
+                            @click="settingStore.textChatVoiceEnabled = !settingStore.textChatVoiceEnabled" />
+                        <span class="toggle-slider"></span>
+                    </label>
+                </div>
+                <p style="font-size: 0.8rem; color: #888; margin: 0;">关闭后文字聊天将不播放语音</p>
+            </div>
         </div>
         <div class="bottom-buttons">
             <button id="quit" @click="handleQuit">退出</button>

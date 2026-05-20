@@ -23,6 +23,7 @@ export const useSettingStore = defineStore('setting', () => {
 	const tokenEnable = ref<boolean>(false)
 	const token = ref<string>("")
 	const visible = ref<boolean>(false)
+	const textChatVoiceEnabled = ref<boolean>(true) // 文字聊天时是否播放语音
 	
 	const configRefMap: Record<string, Ref<string | boolean>> = {
 		ws_url: wsUrl,
@@ -30,7 +31,9 @@ export const useSettingStore = defineStore('setting', () => {
 		ota_version_url: otaVersionUrl,
 		token_enable: tokenEnable,
 		token: token,
-		device_id: deviceId
+		device_id: deviceId,
+		backend_url: backendUrl,
+		text_chat_voice_enabled: textChatVoiceEnabled
 	}
 
 	const fetchConfig = async (): Promise<boolean> => {
@@ -70,7 +73,8 @@ export const useSettingStore = defineStore('setting', () => {
 			backend_url: backendUrl.value,
 			token_enable: tokenEnable.value,
 			token: token.value,
-			device_id: deviceId.value
+			device_id: deviceId.value,
+			text_chat_voice_enabled: textChatVoiceEnabled.value
 		}
 		const dataOK = Object.values(configJson).every(value => value !== "")
 		if (dataOK) {
@@ -116,7 +120,8 @@ export const useSettingStore = defineStore('setting', () => {
 				backend_url: `${window.location.protocol}//${currentHost}:8081`,
 				token_enable: true,
 				token: "test_token",
-				device_id: "b6:63:7d:91:0b:b4"
+				device_id: "b6:63:7d:91:0b:b4",
+				text_chat_voice_enabled: true
 			}
 			// 直接设置各个ref的值，确保backendUrl被正确设置
 			wsUrl.value = defaultConfig.ws_url;
@@ -126,6 +131,7 @@ export const useSettingStore = defineStore('setting', () => {
 			tokenEnable.value = defaultConfig.token_enable;
 			token.value = defaultConfig.token;
 			deviceId.value = defaultConfig.device_id;
+			textChatVoiceEnabled.value = defaultConfig.text_chat_voice_enabled;
 			// 不自动保存到localStorage，让用户确认后再保存
 			console.log("[useSettingStore][initDefaultConfig] 默认配置已初始化，wsProxyUrl:", wsProxyUrl.value);
 			console.log("[useSettingStore][initDefaultConfig] 默认配置已初始化，backendUrl:", backendUrl.value);
@@ -147,6 +153,7 @@ export const useSettingStore = defineStore('setting', () => {
 		tokenEnable,
 		token,
 		visible,
+		textChatVoiceEnabled,
 		updateConfig,
 		fetchConfig,
 		saveToLocal,

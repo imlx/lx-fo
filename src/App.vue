@@ -65,6 +65,16 @@ const wsService = new WebSocketService({
 },{
   async onAudioMessage(audioBuffer) {
     console.log("[WebSocketService][onAudioMessage] audio data received.");
+    
+    // 检查是否应该播放语音（语音通话模式始终播放，文字聊天模式根据开关判断）
+    const shouldPlayVoice = settingStore.textChatVoiceEnabled || 
+                            chatStateManager.currentState.value === ChatState.USER_SPEAKING;
+    
+    if (!shouldPlayVoice) {
+      console.log("[WebSocketService][onAudioMessage] Text chat voice disabled, discarding audio data.");
+      return;
+    }
+    
     switch (chatStateManager.currentState.value as ChatState) {
       case ChatState.USER_SPEAKING:
         console.warn("[WebSocketService][onAudioMessage] User is speaking, discarding audio data.");
@@ -206,7 +216,9 @@ const showVoiceCallPanel = async () => {
 const closeVoiceCallPanel = async () => {
   isVoiceCallVisible.value = false;
   sendAbortMessage();
-  audioService.stopMediaResources();
+  audioService.stopPlaying();        // 停止当前播放
+  audioService.clearAudioQueue();    // 清空音频队列
+  audioService.clearMediaResources(); // 完全清理媒体资源
 };
 
 const ensureBackendUrl = async () => {
