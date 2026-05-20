@@ -25,55 +25,62 @@
 </template>
 
 <script lang="ts" setup>
-import { cn } from "@/lib/utils";
+import { cn } from '@/lib/utils'
 import {
   inspiraImageParticles,
   type InspiraImageParticle as ImageParticle,
-} from "./inspiraImageParticles";
-import { ref, onMounted } from "vue";
+} from './inspiraImageParticles'
+import { ref, onUnmounted } from 'vue'
 
 type ParticleImageProps = {
-  imageSrc: string;
-  class?: string;
-  canvasWidth?: string;
-  canvasHeight?: string;
-  gravity?: string;
-  particleSize?: string;
-  particleGap?: string;
-  mouseForce?: string;
-  renderer?: "default" | "webgl";
-  color?: string;
-  colorArr?: number[];
-  initPosition?: "random" | "top" | "left" | "bottom" | "right" | "misplaced" | "none";
-  initDirection?: "random" | "top" | "left" | "bottom" | "right" | "none";
-  fadePosition?: "explode" | "top" | "left" | "bottom" | "right" | "random" | "none";
-  fadeDirection?: "random" | "top" | "left" | "bottom" | "right" | "none";
-  noise?: number;
-  responsiveWidth?: boolean;
-  responsiveHeight?: boolean;
-};
+  imageSrc: string
+  class?: string
+  canvasWidth?: string
+  canvasHeight?: string
+  gravity?: string
+  particleSize?: string
+  particleGap?: string
+  mouseForce?: string
+  renderer?: 'default' | 'webgl'
+  color?: string
+  colorArr?: number[]
+  initPosition?: 'random' | 'top' | 'left' | 'bottom' | 'right' | 'misplaced' | 'none'
+  initDirection?: 'random' | 'top' | 'left' | 'bottom' | 'right' | 'none'
+  fadePosition?: 'explode' | 'top' | 'left' | 'bottom' | 'right' | 'random' | 'none'
+  fadeDirection?: 'random' | 'top' | 'left' | 'bottom' | 'right' | 'none'
+  noise?: number
+  responsiveWidth?: boolean
+  responsiveHeight?: boolean
+}
 
-defineProps<ParticleImageProps>();
+defineProps<ParticleImageProps>()
 
-let particles: ImageParticle;
-const imageParticleRef = ref<HTMLImageElement>();
+let particles: ImageParticle | null = null
+const imageParticleRef = ref<HTMLImageElement>()
 
 const onImageLoad = () => {
-  const { InspiraImageParticle } = inspiraImageParticles();
-  particles = new InspiraImageParticle(imageParticleRef.value);
-  
-  // 启动粒子效果
-  particles.start();
-  
-  // 粒子启动后再隐藏图片
-  if (imageParticleRef.value) {
-    imageParticleRef.value.style.width = '0';
-    imageParticleRef.value.style.height = '0';
-    imageParticleRef.value.style.overflow = 'hidden';
+  if (!imageParticleRef.value) {
+    console.warn('[ParticleImage] Image reference is null')
+    return
   }
-};
 
-onMounted(() => {
-  // 不在这里初始化，等待图像加载完成
-});
+  // 检查图片是否有有效的尺寸
+  const { naturalWidth, naturalHeight } = imageParticleRef.value
+  if (naturalWidth === 0 || naturalHeight === 0) {
+    console.warn('[ParticleImage] Image has zero dimensions, skipping initialization')
+    return
+  }
+
+  const { InspiraImageParticle } = inspiraImageParticles()
+  particles = new InspiraImageParticle(imageParticleRef.value)
+  particles.start()
+}
+
+onUnmounted(() => {
+  if (particles) {
+    console.log('[ParticleImage] Stopping particle animation')
+    particles.stop()
+    particles = null
+  }
+})
 </script>
