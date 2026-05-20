@@ -2,7 +2,7 @@
   <img
     ref="imageParticleRef"
     :src="imageSrc"
-    :class="cn('invisible absolute w-0 h-0 overflow-hidden', $props.class)"
+    :class="cn('invisible absolute overflow-hidden', $props.class)"
     :data-particle-gap="particleGap"
     :data-width="canvasWidth"
     :data-height="canvasHeight"
@@ -20,7 +20,7 @@
     :data-responsive-width="responsiveWidth"
     :data-responsive-height="responsiveHeight"
     @load="onImageLoad"
-    style="visibility: hidden; position: absolute; width: 0; height: 0;"
+    style="visibility: hidden; position: absolute;"
   />
 </template>
 
@@ -59,23 +59,18 @@ let particles: ImageParticle;
 const imageParticleRef = ref<HTMLImageElement>();
 
 const onImageLoad = () => {
-  if (!imageParticleRef.value) {
-    console.warn("[ParticleImage] Image reference is null");
-    return;
-  }
-  
   const { InspiraImageParticle } = inspiraImageParticles();
   particles = new InspiraImageParticle(imageParticleRef.value);
   
+  // 启动粒子效果
+  particles.start();
+  
+  // 粒子启动后再隐藏图片
   if (imageParticleRef.value) {
-    imageParticleRef.value.style.visibility = 'hidden';
-    imageParticleRef.value.style.position = 'absolute';
     imageParticleRef.value.style.width = '0';
     imageParticleRef.value.style.height = '0';
     imageParticleRef.value.style.overflow = 'hidden';
   }
-  
-  particles.start();
 };
 
 onMounted(() => {
