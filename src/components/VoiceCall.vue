@@ -414,38 +414,39 @@ const texts = [
         </div>
 
         <!-- 内容层 -->
-    <div class="content-layer">
-        <!-- 对话内容区域 -->
-        <div class="chat-content-area" :class="{ 'chat-area-hidden': !isChatAreaVisible, 'chat-area-fading': isChatAreaFading }">
-            <div class="message-container">
-                <div v-for="(message, index) in userMessages" :key="'user-'+index" class="user-message">
-                    {{ message }}
+        <div class="content-layer">
+            <!-- 对话内容区域 -->
+            <div class="chat-content-area" :class="{ 'chat-area-hidden': !isChatAreaVisible, 'chat-area-fading': isChatAreaFading }">
+                <div class="message-container">
+                    <div v-for="(message, index) in userMessages" :key="'user-'+index" class="user-message">
+                        {{ message }}
+                    </div>
+                    <div v-for="(message, index) in aiMessages" :key="'ai-'+index" class="ai-message" :class="{ 'fade-out': message.isFadingOut }">
+                        <span v-for="(charObj, charIndex) in message.displayedChars" :key="charIndex" 
+                                :style="{ opacity: charObj.clarity, filter: `blur(${(1 - charObj.clarity) * 5}px)` }">
+                              {{ charObj.char }}
+                          </span>
+                    </div>
                 </div>
-                <div v-for="(message, index) in aiMessages" :key="'ai-'+index" class="ai-message" :class="{ 'fade-out': message.isFadingOut }">
-                    <span v-for="(charObj, charIndex) in message.displayedChars" :key="charIndex" 
-                            :style="{ opacity: charObj.clarity, filter: `blur(${(1 - charObj.clarity) * 5}px)` }">
-                          {{ charObj.char }}
-                      </span>
+            </div>
+            
+            <div class="voice-avatar-container">
+                <!-- <div class="voice-avatar" :class="{ speaking: currentChatState === ChatState.AI_SPEAKING }">
+                    <img src="/avatar.jpg" alt="Moss头像" />
                 </div>
+                <div v-for="i in 3" :key="i" :class="`ripple-${i}`"></div> -->
             </div>
+                
         </div>
-        
-        <div class="voice-avatar-container">
-            <!-- <div class="voice-avatar" :class="{ speaking: currentChatState === ChatState.AI_SPEAKING }">
-                <img src="/avatar.jpg" alt="Moss头像" />
-            </div>
-            <div v-for="i in 3" :key="i" :class="`ripple-${i}`"></div> -->
+        <!-- 声纹波浪 -->
+        <div class="voice-wave-container">
+            <VoiceWave 
+                :is-active="currentChatState === ChatState.USER_SPEAKING"
+                :wave-height="voiceAnimationManager.voiceWaveHeight.value"
+                :particle-count="20"
+                :visible="currentChatState === ChatState.USER_SPEAKING || currentChatState === ChatState.AI_SPEAKING"
+            />
         </div>
-            <div class="voice-wave-container">
-                <VoiceWave 
-                    :is-active="currentChatState === ChatState.USER_SPEAKING"
-                    :wave-height="voiceAnimationManager.voiceWaveHeight.value"
-                    :particle-count="20"
-                    :visible="currentChatState === ChatState.USER_SPEAKING || currentChatState === ChatState.AI_SPEAKING"
-                />
-            </div>
-        </div>
-        
         <!-- 静音和挂断按钮 -->
         <div class="button-container">
             <button @click="emit('toggleMute')" :class="{ muted: props.isMuted }">
