@@ -1,4 +1,4 @@
-import { ref, onUnmounted } from 'vue'
+import { ref, onUnmounted, markRaw } from 'vue'
 import { defineStore } from 'pinia'
 import type { HelloResponse, UserEcho, AIResponse_Emotion, AIResponse_Text, AbortMessage } from '@/types/message'
 import { ChatStateManager } from '@/services/ChatStateManager'
@@ -18,9 +18,9 @@ type MessageHandler = {
 export const useChatServiceStore = defineStore('chatService', () => {
   const settingStore = useSettingStore()
 
-  // 服务实例（单例）
-  const voiceAnimationManager = new VoiceAnimationManager()
-  const chatStateManager = new ChatStateManager({
+  // 服务实例（使用 markRaw 避免 Pinia 响应式代理导致类型问题）
+  const voiceAnimationManager = markRaw(new VoiceAnimationManager())
+  const chatStateManager = markRaw(new ChatStateManager({
     thresholds: {
       USER_SPEAKING: 0.04,
       USER_INTERRUPT_AI: 0.1,
@@ -40,7 +40,7 @@ export const useChatServiceStore = defineStore('chatService', () => {
       }
     },
     voiceAnimationManager: voiceAnimationManager,
-  })
+  }))
   const audioService = AudioService.getInstance()
 
   // 消息处理器注册
