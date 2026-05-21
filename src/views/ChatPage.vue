@@ -23,14 +23,21 @@ const voiceCallRef = ref<InstanceType<typeof VoiceCall> | null>(null)
 // 消息处理回调
 const messageHandler = {
   async onAudioMessage(audioBuffer: AudioBuffer) {
-    console.log("[ChatPage][onAudioMessage] audio data received.")
+    console.log("[ChatPage][onAudioMessage] audio data received, duration:", audioBuffer.duration)
 
     if (!settingStore.textChatVoiceEnabled) {
       console.log("[ChatPage][onAudioMessage] Text chat voice disabled, discarding audio data.")
       return
     }
 
-    switch (chatService.chatStateManager.currentState.value as ChatState) {
+    // 使用 getState() 方法直接获取状态值，绕过 computed 响应式问题
+    const currentState = chatService.chatStateManager.getState()
+    console.log("[ChatPage][onAudioMessage] Current state:", currentState, "isPlaying:", chatService.audioService.isPlaying)
+
+    // 如果状态为 undefined，使用 IDLE 作为默认值
+    const effectiveState = currentState ?? ChatState.IDLE
+
+    switch (effectiveState) {
       case ChatState.USER_SPEAKING:
         console.warn(
           "[ChatPage][onAudioMessage] User is speaking, discarding audio data."
@@ -43,12 +50,26 @@ const messageHandler = {
         )
         chatService.audioService.enqueueAudio(audioBuffer)
         chatService.chatStateManager.setState(ChatState.AI_SPEAKING)
+        // 直接触发播放，不依赖事件
+        if (settingStore.textChatVoiceEnabled && !chatService.audioService.isPlaying) {
+          console.log("[ChatPage][onAudioMessage] Calling playAudio...")
+          chatService.audioService.playAudio()
+        }
         break
       case ChatState.AI_SPEAKING:
         console.log(
           "[ChatPage][onAudioMessage] AI is speaking, enqueuing audio data."
         )
         chatService.audioService.enqueueAudio(audioBuffer)
+        // 已经在播放中，依靠 onended 自动播放下一个
+        break
+      default:
+        console.error("[ChatPage][onAudioMessage] Unknown state:", currentState, "treating as IDLE")
+        chatService.audioService.enqueueAudio(audioBuffer)
+        chatService.chatStateManager.setState(ChatState.AI_SPEAKING)
+        if (settingStore.textChatVoiceEnabled && !chatService.audioService.isPlaying) {
+          chatService.audioService.playAudio()
+        }
         break
     }
   },
@@ -116,7 +137,7 @@ const sendMessage = (text: string) => {
     text: text,
     source: "text"
   }
-  if (chatService.chatStateManager.currentState.value === ChatState.AI_SPEAKING) {
+  if (chatService.chatStateManager.getState() === ChatState.AI_SPEAKING) {
     chatService.sendAbortMessage()
     chatService.audioService.clearAudioQueue()
   }
@@ -147,7 +168,7 @@ onUnmounted(() => {
 
 <template>
   <div class="chat-page">
-    <Header :connection-status="chatService.wsService.connectionStatus.value" />
+    <Header :connection-status="chatService.wsService.getConnectionStatus()" />
 
     <ChatContainer class="chat-container" ref="chatContainerRef" />
     <InputField

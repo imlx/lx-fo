@@ -35,7 +35,7 @@ def run_proxy():
             proxy_host=urlparse(ws_proxy_url).hostname,
             proxy_port=urlparse(ws_proxy_url).port,
             token_enable=configuration.get_bool("TOKEN_ENABLE"),
-            token=configuration.get_str("DEVICE_TOKEN"),
+            token=configuration.get_str("TOKEN"),
         )
         
         # 运行代理服务器

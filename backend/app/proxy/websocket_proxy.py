@@ -1,10 +1,12 @@
 import asyncio
 import signal
 import ssl
-import websockets
 import json
 import numpy as np
 import requests
+from websockets.legacy.client import connect as legacy_connect
+from websockets.legacy.server import serve as legacy_serve
+from websockets.legacy.protocol import WebSocketCommonProtocol
 from ..utils.device import get_mac_address, get_local_ip
 from ..utils.logger import get_logger
 from ..utils.audio import pcm_to_opus, decoder, AudioProcessor
@@ -43,8 +45,8 @@ class WebSocketProxy:
         
         # 添加SSL上下文，解决证书验证问题
         self.ssl_context = ssl.create_default_context()
-        self.ssl_context.check_hostname = False  # 不检查主机名
-        self.ssl_context.verify_mode = ssl.CERT_NONE  # 不验证证书
+        # 使用默认的 SSL 配置，启用证书验证
+        # 禁用验证可能导致服务器拒绝连接
 
         self.headers = {
             "Device-Id": self.device_id,
@@ -54,7 +56,10 @@ class WebSocketProxy:
         if self.token_enable:
             self.headers["Authorization"] = f"Bearer {self.token}"
 
-        self._update_ota_address()
+        try:
+            self._update_ota_address()
+        except Exception as e:
+            logger.warning(f"OTA 地址更新失败，使用默认配置: {e}")
 
     def _update_ota_address(self):
         MAC_ADDR = get_mac_address()
@@ -159,21 +164,21 @@ class WebSocketProxy:
 
     async def proxy_handler(self, websocket):
         """来自浏览器的 WebSocket 连接"""
+        logger.info(f"正在创建新的客户端 websocket 连接: {websocket.remote_address}")
         try:
-            logger.info(
-                f"正在创建新的客户端 websocket 连接: {websocket.remote_address}"
-            )
-            # 使用自定义SSL上下文
-            async with websockets.connect(
+            # 使用 legacy API 连接
+            server_ws = await legacy_connect(
                 self.websocket_url, 
-                additional_headers=self.headers,
+                extra_headers=self.headers,
                 ssl=self.ssl_context
-            ) as server_ws:
-                logger.info(f"已连接至 websocket 服务器，请求头: {self.headers}")
+            )
+            logger.info(f"已连接至 websocket 服务器，请求头: {self.headers}")
+            try:
                 await self._handle_proxy_communication(websocket, server_ws)
-        
+            finally:
+                await server_ws.close()
         except Exception as e:
-            logger.error(f"代理失败: {e}")
+            logger.error(f"代理失败: {e}", exc_info=True)
         finally:
             logger.info("客户端连接关闭")
 
@@ -337,7 +342,7 @@ class WebSocketProxy:
 
         try:
             logger.info(f"代理服务器启动在 {self.proxy_host}:{self.proxy_port}")
-            async with websockets.serve(
+            async with legacy_serve(
                 self.proxy_handler, self.proxy_host, self.proxy_port
             ) as server:
                 # 等待关闭信号

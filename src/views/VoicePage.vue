@@ -21,32 +21,56 @@ const voiceCallRef = ref<InstanceType<typeof VoiceCall> | null>(null)
 // 消息处理回调
 const messageHandler = {
   async onAudioMessage(audioBuffer: AudioBuffer) {
-    console.log("[VoicePage][onAudioMessage] audio data received.")
+    console.log("[VoicePage][onAudioMessage] audio data received, duration:", audioBuffer.duration)
 
     if (isMuted.value) {
       console.log("[VoicePage][onAudioMessage] Muted, skipping audio play")
       return
     }
 
-    switch (chatService.chatStateManager.currentState.value as ChatState) {
+    // 使用 getState() 方法直接获取状态值，绕过 computed 响应式问题
+    const currentState = chatService.chatStateManager.getState()
+    console.log("[VoicePage][onAudioMessage] Current state:", currentState, "isPlaying:", chatService.audioService.isPlaying)
+
+    // 如果状态为 undefined，使用 IDLE 作为默认值
+    const effectiveState = currentState ?? ChatState.IDLE
+
+    switch (effectiveState) {
       case ChatState.USER_SPEAKING:
         console.warn(
           "[VoicePage][onAudioMessage] User is speaking, discarding audio data."
         )
         chatService.audioService.enqueueAudio(audioBuffer)
+        console.log("[VoicePage][onAudioMessage] Audio enqueued, queue size:", chatService.audioService.queueLength)
         break
       case ChatState.IDLE:
         console.log(
           "[VoicePage][onAudioMessage] Audio is not playing, set ai speaking..."
         )
         chatService.audioService.enqueueAudio(audioBuffer)
+        console.log("[VoicePage][onAudioMessage] Audio enqueued, queue size:", chatService.audioService.queueLength)
         chatService.chatStateManager.setState(ChatState.AI_SPEAKING)
+        // 直接触发播放，不依赖事件
+        if (!isMuted.value && !chatService.audioService.isPlaying) {
+          console.log("[VoicePage][onAudioMessage] Calling playAudio...")
+          chatService.audioService.playAudio()
+        }
         break
       case ChatState.AI_SPEAKING:
         console.log(
           "[VoicePage][onAudioMessage] AI is speaking, enqueuing audio data."
         )
         chatService.audioService.enqueueAudio(audioBuffer)
+        console.log("[VoicePage][onAudioMessage] Audio enqueued, queue size:", chatService.audioService.queueLength)
+        // 已经在播放中，依靠 onended 自动播放下一个
+        break
+      default:
+        console.error("[VoicePage][onAudioMessage] Unknown state:", currentState, "treating as IDLE")
+        chatService.audioService.enqueueAudio(audioBuffer)
+        chatService.chatStateManager.setState(ChatState.AI_SPEAKING)
+        if (!isMuted.value && !chatService.audioService.isPlaying) {
+          chatService.audioService.playAudio()
+        }
         break
     }
   },

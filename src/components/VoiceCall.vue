@@ -29,6 +29,9 @@ let chatAreaTimer: number | null = null;
 const isUserSpeaking = ref(false);
 const isAiSpeaking = ref(false);
 
+// 当前聊天状态 - 使用计算属性获取，绕过 computed 响应式问题
+const currentChatState = computed(() => props.chatStateManager.getState());
+
 // 打字机效果相关变量
 const typingSpeed = 50; // 打字速度（毫秒/字符）
 const claritySpeed = 10; // 清晰度变化速度（毫秒/帧）
@@ -428,17 +431,17 @@ const texts = [
         </div>
         
         <div class="voice-avatar-container">
-            <!-- <div class="voice-avatar" :class="{ speaking: props.chatStateManager.currentState.value === ChatState.AI_SPEAKING }">
+            <!-- <div class="voice-avatar" :class="{ speaking: currentChatState === ChatState.AI_SPEAKING }">
                 <img src="/avatar.jpg" alt="Moss头像" />
             </div>
             <div v-for="i in 3" :key="i" :class="`ripple-${i}`"></div> -->
         </div>
             <div class="voice-wave-container">
                 <VoiceWave 
-                    :is-active="props.chatStateManager.currentState.value === ChatState.USER_SPEAKING"
+                    :is-active="currentChatState === ChatState.USER_SPEAKING"
                     :wave-height="voiceAnimationManager.voiceWaveHeight.value"
                     :particle-count="20"
-                    :visible="props.chatStateManager.currentState.value === ChatState.USER_SPEAKING || props.chatStateManager.currentState.value === ChatState.AI_SPEAKING"
+                    :visible="currentChatState === ChatState.USER_SPEAKING || currentChatState === ChatState.AI_SPEAKING"
                 />
             </div>
         </div>

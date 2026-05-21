@@ -11,6 +11,7 @@ export class AudioService {
   private _audioQueue: AudioBuffer[] = [];
   private _onQueueEmpty: (() => void) | null = null;
   private _useAudioWorklet: boolean = true; // 标记是否使用AudioWorklet
+  private _isPlaying: boolean = false; // 标记是否正在播放音频
 
   private constructor() {
     this._audioContext = new (window.AudioContext || window.webkitAudioContext)({
@@ -45,6 +46,14 @@ export class AudioService {
     return AudioService.instance;
   }
 
+  public get isPlaying(): boolean {
+    return this._isPlaying;
+  }
+
+  public get queueLength(): number {
+    return this._audioQueue.length;
+  }
+
   public getAudioContext(): AudioContext {
     return this._audioContext;
   }
@@ -73,8 +82,15 @@ export class AudioService {
   public playAudio = async () => {
     if (this._audioQueue.length === 0) {
       console.log("[AudioManager][playAudio] Audio queue is empty.");
+      this._isPlaying = false;
       this._onQueueEmpty?.();
       return;
+    }
+
+    // 确保 AudioContext 处于运行状态
+    if (this._audioContext.state === "suspended") {
+      await this._audioContext.resume();
+      console.log("[AudioManager][playAudio] AudioContext resumed.");
     }
 
     // 如果有正在播放的音频，先停止
@@ -85,6 +101,7 @@ export class AudioService {
     const audioBuffer: AudioBuffer = this._audioQueue.shift() as AudioBuffer;
 
     try {
+      this._isPlaying = true;
       // 创建播放节点
       this._sourceNode = this._audioContext.createBufferSource();
       this._sourceNode.buffer = audioBuffer;
@@ -100,6 +117,7 @@ export class AudioService {
             console.warn("[AudioManager][onended] Error disconnecting:", error);
           }
           this._sourceNode = null;
+          this._isPlaying = false;
         }
         this.playAudio();
       };
@@ -108,6 +126,7 @@ export class AudioService {
     } catch (error) {
       console.error("[AudioManager][playAudio] Error playing audio:", error);
       this._sourceNode = null;
+      this._isPlaying = false;
       // 继续播放下一个音频
       this.playAudio();
     }
@@ -122,6 +141,7 @@ export class AudioService {
         console.warn("[AudioManager][stopPlaying] Error stopping audio:", error);
       } finally {
         this._sourceNode = null;
+        this._isPlaying = false;
       }
     }
   };

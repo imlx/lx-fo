@@ -12,6 +12,10 @@ import type { AbortMessage, AIListening_Start, AIListening_Stop } from "@/types/
 export class ChatStateManager {
     private _currentState = ref<ChatState>(ChatState.IDLE);
     readonly currentState = computed<ChatState>(() => this._currentState.value);
+    // 公共方法，直接返回状态值，绕过 computed 响应式问题
+    public getState(): ChatState {
+        return this._currentState.value;
+    }
     private deps: ChatStateDependencies;
     private transitions: Map<ChatState, ChatStateTransition>;
     private eventHandlers: Map<ChatEventType, ChatEventHandler[]> = new Map();
@@ -124,17 +128,21 @@ export class ChatStateManager {
     }
 
     public setState(newState: ChatState) {
-        const oldState = this.currentState.value;
+        const oldState = this.getState();
         const oldTransition = this.transitions.get(oldState);
         const newTransition = this.transitions.get(newState);
         oldTransition?.onExit?.();
-        this._currentState.value = newState;
+        // 使用 getState() 确保获取的是真实状态值，不受响应式代理影响
+        const stateRef = this._currentState as unknown as { value: ChatState };
+        if (stateRef && typeof stateRef === 'object' && 'value' in stateRef) {
+            stateRef.value = newState;
+        }
         console.log("[ChatStateManager][setState] State changed from", oldState, "to", newState)
         newTransition?.onEnter?.(oldState);
     }
 
     public handleUserAudioLevel(audioLevel: number, data: Float32Array) {
-        const currentTransition = this.transitions.get(this.currentState.value);
+        const currentTransition = this.transitions.get(this.getState());
         currentTransition?.handleAudioLevel(audioLevel, data);
     }
 

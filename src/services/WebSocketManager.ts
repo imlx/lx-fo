@@ -5,6 +5,11 @@ import type { WebSocketDependencies, WebSocketHandlers } from '@/types/websocket
 export class WebSocketService {
     private _connectionStatus = ref<'connected' | 'disconnected' | 'error'>('disconnected')
     readonly connectionStatus = computed(() => this._connectionStatus.value)
+    
+    // 提供一个方法来获取状态值，避免模板中需要 .value
+    public getConnectionStatus(): 'connected' | 'disconnected' | 'error' {
+        return this._connectionStatus.value
+    }
     private ws: WebSocket | null = null
     private handlers: WebSocketHandlers
     private reconnectTimer: number | null = null
