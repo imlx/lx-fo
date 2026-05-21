@@ -120,10 +120,10 @@ const messageHandler = {
     }
   },
   onConnect() {
-    ElMessage.success("连接成功")
+    ElMessage.success("核心损坏已修复")
   },
   onDisconnect(event: CloseEvent) {
-    ElMessage.error("连接断开，正在重连...")
+    ElMessage.error("检测到量子波动异常...")
   }
 }
 

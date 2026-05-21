@@ -13,7 +13,11 @@ export class WebSocketService {
     private ws: WebSocket | null = null
     private handlers: WebSocketHandlers
     private reconnectTimer: number | null = null
+    private reconnectAttempts = 0
+    private readonly maxReconnectAttempts = 5
+    private readonly reconnectDelay = 3000  // 3秒重连间隔
     private deps: WebSocketDependencies
+    private currentUrl: string = ""
 
     constructor(deps: WebSocketDependencies, handlers: WebSocketHandlers) {
         this.deps = deps
@@ -21,6 +25,10 @@ export class WebSocketService {
     }
 
     public connect(url: string | URL): void {
+        // 保存当前 URL 用于重连
+        this.currentUrl = url.toString()
+        // 重置重连计数
+        this.reconnectAttempts = 0
         this.ws = new WebSocket(url)
         this.ws.onopen = this.handleOpen.bind(this)
         this.ws.onclose = this.handleClose.bind(this)
@@ -69,9 +77,70 @@ export class WebSocketService {
     }
 
     private handleClose(event: CloseEvent): void {
-        console.log(`[WebSocketService] Connection closed: ${event.code} ${event.reason}`)
+        // 根据 code 分析断开原因
+        let reason = ""
+        switch (event.code) {
+            case 1000:
+                reason = "Normal closure (正常关闭)"
+                break
+            case 1001:
+                reason = "Server going away (服务器关闭)"
+                break
+            case 1002:
+                reason = "Protocol error (协议错误)"
+                break
+            case 1003:
+                reason = "Unsupported data (不支持的数据)"
+                break
+            case 1005:
+                reason = "No status received (无状态)"
+                break
+            case 1006:
+                reason = "Abnormal closure (异常关闭-网络问题)"
+                break
+            case 1007:
+                reason = "Invalid frame payload data (无效数据)"
+                break
+            case 1008:
+                reason = "Policy violation (策略违规)"
+                break
+            case 1009:
+                reason = "Message too big (消息太大)"
+                break
+            case 1010:
+                reason = "Required extension missing (缺少扩展)"
+                break
+            case 1011:
+                reason = "Internal server error (服务器内部错误)"
+                break
+            case 1012:
+                reason = "Service restart (服务重启)"
+                break
+            case 1013:
+                reason = "Try again later (稍后重试)"
+                break
+            case 1015:
+                reason = "TLS handshake fail (TLS握手失败)"
+                break
+            default:
+                reason = "Unknown"
+        }
+        console.log(`[WebSocketService] Connection closed: code=${event.code} reason="${event.reason}" meaning="${reason}"`)
         this._connectionStatus.value = "disconnected"
         this.deps.settingStore.sessionId = ""
+        
+        // 自动重连机制（参照初始版本设计）
+        if (this.reconnectAttempts < this.maxReconnectAttempts) {
+            this.reconnectAttempts++
+            console.log(`[WebSocketService] Scheduling reconnect attempt ${this.reconnectAttempts}/${this.maxReconnectAttempts} in ${this.reconnectDelay}ms`)
+            this.reconnectTimer = window.setTimeout(() => {
+                console.log(`[WebSocketService] Attempting reconnect ${this.reconnectAttempts}/${this.maxReconnectAttempts}...`)
+                this.connect(this.currentUrl)
+            }, this.reconnectDelay)
+        } else {
+            console.warn(`[WebSocketService] Max reconnect attempts (${this.maxReconnectAttempts}) reached, giving up.`)
+        }
+        
         this.handlers.onDisconnect?.(event)
     }
 
