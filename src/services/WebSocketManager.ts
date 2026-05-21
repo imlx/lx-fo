@@ -14,7 +14,7 @@ export class WebSocketService {
     private handlers: WebSocketHandlers
     private reconnectTimer: number | null = null
     private reconnectAttempts = 0
-    private readonly maxReconnectAttempts = 5
+    private readonly maxReconnectAttempts = 30  // 调整为 30 次
     private readonly reconnectDelay = 3000  // 3秒重连间隔
     private deps: WebSocketDependencies
     private currentUrl: string = ""
@@ -74,6 +74,9 @@ export class WebSocketService {
         // 发送 Hello 消息
         this.sendHelloMessage()
         this.handlers.onConnect?.()
+        
+        // 心跳机制暂时禁用，待排查问题
+        // this.startHeartbeat()
     }
 
     private handleClose(event: CloseEvent): void {
